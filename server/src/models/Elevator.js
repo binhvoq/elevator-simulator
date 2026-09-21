@@ -55,7 +55,7 @@ export class Elevator {
   }
 
   getCommittedFloors() {
-    return new Set([...this.#carFloors, ...this.#hallCalls.keys()]);
+    return new Set([...this.#carFloors, ...this.#hallCalls.keys()]); // gom tất cả lời gọi của khách trong cabin và khách ở ngoải sảnh
   }
 
   hasWork() {
@@ -68,7 +68,7 @@ export class Elevator {
 
   assignHallRequest(request) {
     const dirs = this.#hallCalls.get(request.floor) ?? new Set();
-    dirs.add(request.direction);
+    dirs.add(request.direction); // Nhớ hướng của thang máy
     this.#hallCalls.set(request.floor, dirs);
 
     if (this.#direction === Direction.IDLE) {
@@ -83,7 +83,7 @@ export class Elevator {
     }
   }
 
-  addCarRequest(request) {
+  addCarRequest(request) { // Thêm lời gọi của khách trong cabin
     if (request.floor === this.#currentFloor) {
       if (this.#doorState === DoorState.CLOSED) {
         this.#beginOpening();
@@ -192,19 +192,25 @@ export class Elevator {
   }
 
   #shouldStopHere() {
+    // 1) Trong cabin có người muốn xuống tầng này → phải dừng
     if (this.#carFloors.has(this.#currentFloor)) {
       return true;
     }
     const hall = this.#hallAtCurrent();
+    // 2) Sảnh tầng này không ai bấm → lướt qua
     if (!hall || hall.size === 0) {
       return false;
     }
+    // IDLE: không đang đi chiều nào → dừng đón luôn
     if (this.#direction === Direction.IDLE) {
       return true;
     }
+    // 3) Sảnh bấm ĐÚNG chiều đang đi → dừng, đón
     if (hall.has(this.#direction)) {
       return true;
     }
+    // 4) Sảnh chỉ bấm NGƯỢC chiều: còn việc phía trước thì LƯỚT,
+    //    hết việc phía trước thì dừng (đổi chiều / đón ngược)
     return !this.#hasStopsAhead();
   }
 
@@ -246,7 +252,7 @@ export class Elevator {
     }
 
     if (this.#direction === Direction.UP || this.#direction === Direction.DOWN) {
-      hall.delete(this.#direction);
+      hall.delete(this.#direction); // là chỉ xóa 1 nợ theo hướng chứ không xóa hết
     } else {
       hall.clear();
     }
@@ -256,7 +262,7 @@ export class Elevator {
     }
   }
 
-  #nextTarget() {
+  #nextTarget() { // Quyết định tầng tiếp theo để đi đến
     const floors = [...this.getCommittedFloors()];
     if (floors.length === 0) {
       return null;
